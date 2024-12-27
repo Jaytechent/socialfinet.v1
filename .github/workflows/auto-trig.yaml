@@ -1,8 +1,8 @@
-name: Trigger Bot Every 5 Minutes
+name: Auto-trigger-3hrs
 
 on:
   schedule:
-    - cron: "*/59 * * * *"  # This triggers the workflow every 1 minutes
+    - cron: "* */3 * * *"  # This triggers the workflow every 1 minutes
   workflow_dispatch:  # This allows manual triggering
 
 jobs:
