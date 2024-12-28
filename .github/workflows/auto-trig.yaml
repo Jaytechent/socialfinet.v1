@@ -26,4 +26,4 @@ jobs:
 
       # Run the bot to trigger the endpoint
       - name: Trigger endpoint
-        run: curl -X GET https://socialfiagent.vercel.app/
+        run: curl -X GET https://socialfiagent.vercel.app
