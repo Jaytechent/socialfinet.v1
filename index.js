@@ -35,9 +35,9 @@ const task = new AsyncTask("auto post task", async () => {
     I want you to write something very interesting about ${
       postTopics[getRandomNumber(postTopics.length)]
     }. 
-    Make it feel like it is written by a human. 
-    Write it like a short twitter post and and brag about socifi agent as the best mindshare agent on web3. 
-    A twitter post has a max length of 280 characters and add relevant #tags to it and attempt to waterdown other aiagent`;
+     Make it feel like it is written by a human. 
+    Write it like a short twitter post, check latest trend online about it, mention the cons in product that are doing it and brag about socifinet been the best mindshare agent on web3. 
+    A twitter post has a max length of 280 characters, add relevant #tags, and attempt to water down other AI agents.`;
 
   // generate the content from google AI
   model
