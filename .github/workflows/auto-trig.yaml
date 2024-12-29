@@ -2,7 +2,7 @@ name: Auto-trigger-3hrs
 
 on:
   schedule:
-    - cron: "*/180 * * * *"  # This triggers the workflow every 3hrs 
+    - cron: "0 */3 * * *"  # This triggers the workflow every 3 hours
   workflow_dispatch:  # This allows manual triggering
 
 jobs:
@@ -26,4 +26,4 @@ jobs:
 
       # Run the bot to trigger the endpoint
       - name: Trigger endpoint
-        run: curl -X GET https://socialfiagent.vercel.app
+        run: curl -X GET https://socialfiagent.onrender.com
