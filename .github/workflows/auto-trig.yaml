@@ -1,4 +1,4 @@
-name: Auto-trigger-3hrs
+name: Auto-trigger-render
 
 on:
   schedule:
