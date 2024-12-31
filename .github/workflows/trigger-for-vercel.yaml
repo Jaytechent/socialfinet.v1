@@ -1,29 +1,15 @@
-name: Auto-trigger-vercel
+name: Auto-trigger-3hrs
 
 on:
   schedule:
-    - cron: "0 */3 * * *"  # This triggers the workflow every 3 hours
-  workflow_dispatch:  # This allows manual triggering
+    - cron: "0 */3 * * *"  # Triggers every 3 hours
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   trigger-bot:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout your repository
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # Set up Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-
-      # Install dependencies
-      - name: Install dependencies
-        run: npm install
-
-      # Run the bot to trigger the endpoint
       - name: Trigger endpoint
-        run: curl -X GET https://socialfiagent.vercel.app
+        run: |
+          curl -X POST https://socialfiagent.vercel.app/post-on-ping
