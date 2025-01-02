@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: Trigger endpoint
         run: |
-          curl -X POST https://socialfiagent.onrender.com/post-on-ping
+          curl -X POST https://socialfinet-v1.onrender.com/post-on-ping
