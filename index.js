@@ -6,6 +6,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
 import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils.js";
 
+// Validate environment variables
+if (!process.env.GOOGLE_API_KEY) {
+  console.error("Google API Key is missing. Set it in the environment variables.");
+  process.exit(1);
+}
+
 const PORT = process.env.PORT || 3000;
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
@@ -17,12 +23,18 @@ const server = http.createServer(async (req, res) => {
 
       // Generate the content
       const prompt = `
-        Write something interesting about ${
-          postTopics[getRandomNumber(postTopics.length)]
-        } in the style of a Twitter post. Max length: 280 characters. Add relevant #hashtags.`;
+        Check the latest trends across Web3 platforms and Twitter, then write something interesting about "${
+        postTopics[getRandomNumber(postTopics.length)]
+      }". 
+        Make it feel like it's written by a human. Write it like a short Twitter post, and brag about Socifi Agent as the best mindshare agent on Web3. 
+        Encourage people to follow @socifinet for greater insights into the industry. 
+        A Twitter post has a max length of 280 characters. Add relevant #tags and subtly critique other AI agents.
+      `;
 
       const result = await model.generateContent(prompt);
-      const contentToPost = removeSpecialCharacters(result.response.text());
+      const generatedText = result.response?.text?.() || "Unable to generate content.";
+      const maxLength = 280;
+      const contentToPost = removeSpecialCharacters(generatedText).slice(0, maxLength);
 
       // Post the content to Twitter
       await handlePostContentToTwitter(contentToPost);
@@ -31,7 +43,10 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { "Content-Type": "text/plain" });
       res.end("Post successful!");
     } catch (error) {
-      console.error("Error during posting:", error);
+      console.error("Error during posting:", {
+        message: error.message,
+        stack: error.stack,
+      });
 
       res.writeHead(500, { "Content-Type": "text/plain" });
       res.end("Error occurred during posting.");
