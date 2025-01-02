@@ -3,7 +3,7 @@ dotenv.config();
 
 import http from "http";
 import { fetchMentions, postReply } from "./services/twitterService.js";
-import { processMentionWithAI } from "./services/aiService.js";
+import { processMentionWithAI } from "./services/aiReply.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
 import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils/utils.js";
