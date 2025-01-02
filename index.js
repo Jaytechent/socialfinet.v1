@@ -23,9 +23,9 @@ const server = http.createServer(async (req, res) => {
 
       // Generate the content
       const prompt = `
-        Check the latest trends across Web3 platforms and Twitter, then write something interesting about "${
+         write something interesting about "${
         postTopics[getRandomNumber(postTopics.length)]
-      }". 
+      }". check web for latest protocls working on it and state some cons in there product
         Make it feel like it's written by a human. Write it like a short Twitter post, and brag about Socifi Agent as the best mindshare agent on Web3. 
         Encourage people to follow @socifinet for greater insights into the industry. 
         A Twitter post has a max length of 280 characters. Add relevant #tags and subtly critique other AI agents.
