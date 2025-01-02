@@ -6,7 +6,7 @@ import { fetchMentions, postReply } from "./services/twitterService.js";
 import { processMentionWithAI } from "./services/aiReply.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
-import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils/utils.js";
+import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils.js";
 
 const PORT = process.env.PORT || 3000;
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
