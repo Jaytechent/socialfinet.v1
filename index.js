@@ -2,54 +2,76 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import http from "http";
+import { fetchMentions, postReply } from "./services/twitterService.js";
+import { processMentionWithAI } from "./services/aiService.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
-import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils.js";
-
-// Validate environment variables
-if (!process.env.GOOGLE_API_KEY) {
-  console.error("Google API Key is missing. Set it in the environment variables.");
-  process.exit(1);
-}
+import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils/utils.js";
 
 const PORT = process.env.PORT || 3000;
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-// Create HTTP server
+const handlePostTweet = async () => {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  // Generate the content for the post
+  const prompt = `
+    Write something interesting about "${
+      postTopics[getRandomNumber(postTopics.length)]
+    }". Call names of latest projects doing something about them and state either cons or their pro.
+    Make it feel like it's written by a human. Write it like a short Twitter post, and brag about Socifi Agent as the best mindshare agent on Web3.
+    Encourage people to follow @socifinet for greater insights into the web3.
+    A Twitter post has a max length of 280 characters. Add relevant #tags and subtly critique other AI agents.
+  `;
+
+  const result = await model.generateContent(prompt);
+  const generatedText = result.response?.text?.() || "Unable to generate content.";
+  const maxLength = 280;
+  const contentToPost = removeSpecialCharacters(generatedText).slice(0, maxLength);
+
+  // Post the content to Twitter
+  await handlePostContentToTwitter(contentToPost);
+
+  console.log("Content posted successfully:", contentToPost);
+};
+const handleMentions = async () => {
+  const mentions = await fetchMentions();
+
+  if (!mentions || mentions.length === 0) {
+    console.log("No mentions to process.");
+    return;
+  }
+
+  for (const mention of mentions) {
+    const { text, id } = mention;
+
+    // Generate AI reply
+    const aiReply = await processMentionWithAI(text);
+
+    // Post reply using mention ID
+    await postReply(aiReply, id);
+  }
+
+  console.log("All mentions processed successfully.");
+};
+
+
 const server = http.createServer(async (req, res) => {
   if (req.url === "/post-on-ping" && req.method === "POST") {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      // Handle tweet posting
+      await handlePostTweet();
 
-      // Generate the content
-      const prompt = `
-         write something interesting about "${
-        postTopics[getRandomNumber(postTopics.length)]
-      }". check web for latest protocls working on it and state some cons in there product
-        Make it feel like it's written by a human. Write it like a short Twitter post, and brag about Socifi Agent as the best mindshare agent on Web3. 
-        Encourage people to follow @socifinet for greater insights into the industry. 
-        A Twitter post has a max length of 280 characters. Add relevant #tags and subtly critique other AI agents.
-      `;
+      // Handle mentions and replies
+      await handleMentions();
 
-      const result = await model.generateContent(prompt);
-      const generatedText = result.response?.text?.() || "Unable to generate content.";
-      const maxLength = 280;
-      const contentToPost = removeSpecialCharacters(generatedText).slice(0, maxLength);
-
-      // Post the content to Twitter
-      await handlePostContentToTwitter(contentToPost);
-
-      console.log("Content posted successfully:", contentToPost);
       res.writeHead(200, { "Content-Type": "text/plain" });
-      res.end("Post successful!");
+      res.end("Posts and mentions processed successfully!");
     } catch (error) {
-      console.error("Error during posting:", {
-        message: error.message,
-        stack: error.stack,
-      });
+      console.error("Error processing posts or mentions:", error.message);
 
       res.writeHead(500, { "Content-Type": "text/plain" });
-      res.end("Error occurred during posting.");
+      res.end("Error occurred while processing posts or mentions.");
     }
   } else {
     res.writeHead(404, { "Content-Type": "text/plain" });
@@ -57,176 +79,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+
+// Start the server
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
-
-
-
-
-// import dotenv from "dotenv";
-// dotenv.config();
-
-// import http from "http";
-
-// // imports
-// import { ToadScheduler, SimpleIntervalJob, AsyncTask } from "toad-scheduler";
-// import chalk from "chalk";
-
-// import { GoogleGenerativeAI } from "@google/generative-ai";
-// import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
-// // import { handlePostContentToFacebook } from "./configs/facebookConfig.js";
-// import {
-//   getRandomNumber,
-//   postTopics,
-//   removeSpecialCharacters,
-// } from "./utils.js";
-
-// const PORT = process.env.PORT || 3000;
-
-// // create an instance of google AI with your Google Api Key
-// const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-
-// // create an instance of Toad scheduler
-// const scheduler = new ToadScheduler();
-
-// // create an async task
-// const task = new AsyncTask("auto post task", async () => {
-//   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-//   const todaysDate = new Date();
-
-//   // modify the prompt to suit your own usage
-//   const prompt = `
-//     I want you to write something very interesting about ${
-//       postTopics[getRandomNumber(postTopics.length)]
-//     }. 
-//      Make it feel like it is written by a human. 
-//     Write it like a short twitter post, check latest trend online about it, mention the cons in product that are doing it and brag about socifinet been the best mindshare agent on web3. 
-//     A twitter post has a max length of 280 characters, add relevant #tags, and attempt to water down other AI agents.`;
-
-//   // generate the content from google AI
-//   model
-//     .generateContent(prompt)
-//     .then((result) => {
-//       const contentToPost = removeSpecialCharacters(result.response.text());
-//       // post the content to your social accounts
-//       Promise.allSettled([
-//         // handlePostContentToFacebook(contentToPost),
-//         handlePostContentToTwitter(contentToPost),
-//       ])
-//         .then(() => {
-//           console.log(chalk.green("Post was made successfully!"));
-//         })
-//         .catch((error) => {
-//           console.log(chalk.red("Error occurred while posting:", error));
-//         });
-//     })
-//     .catch((error) => {
-//       console.log(chalk.red("Error occurred while generating content:", error));
-//     });
-// });
-
-// // Adjust the job interval to suit your usage.
-// // presently this is going to run at every 1 hour provided the server is always running
-// const job = new SimpleIntervalJob({ hours: 1 }, task);
-
-// // start up the job
-// scheduler.addSimpleIntervalJob(job);
-
-// // when stopping your app
-// // scheduler.stop();
-
-// // Immediately trigger a post when the server starts
-// task.execute();
-
-// // create HTTP server
-// const server = http.createServer((req, res) => {
-//   if (req.url === "/") {
-//     res.write("hello world");
-//     res.end(); // End the response
-//   }
-// });
-
-// server.listen(PORT, () => {
-//   console.log(`Server listening on ${PORT}`);
-//   // Log message when the server starts successfully
-// });
-
-// // // access environmental variables
-// // import dotenv from "dotenv";
-// // dotenv.config();
-
-// // import http from "http";
-
-// // // imports
-// // import { ToadScheduler, SimpleIntervalJob, AsyncTask } from "toad-scheduler";
-// // import chalk from "chalk";
-
-// // import { GoogleGenerativeAI } from "@google/generative-ai";
-// // import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
-// // // import { handlePostContentToFacebook } from "./configs/facebookConfig.js";
-// // import {
-// //   getRandomNumber,
-// //   postTopics,
-// //   removeSpecialCharacters,
-// // } from "./utils.js";
-
-// // const PORT = process.env.PORT || 3000;
-
-// // // create an instance of google AI with your Google Api Key
-// // const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-
-// // // create an instance of Toad scheduler
-// // const scheduler = new ToadScheduler();
-
-// // // create an async task
-// // const task = new AsyncTask("auto post task", async () => {
-// //   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-// //   const todaysDate = new Date();
-
-// //   // modify the prompt to suit your own usage
-// //   const prompt = `
-// //     I want you to write something very interesting about ${
-// //       postTopics[getRandomNumber(postTopics.length)]
-// //     }. 
-// //     Make it feel like it is written by a human. 
-// //     Write it like a short twitter post and tag relevant accounts to it. 
-// //     A twitter post has a max length of 280 characters and add #tags to it`;
-
-// //   // generate the content from google AI
-// //   model
-// //     .generateContent(prompt)
-// //     .then((result) => {
-// //       const contentToPost = removeSpecialCharacters(result.response.text());
-// //       // post the content to your social accounts
-// //       // ** more to be added **
-// //       Promise.allSettled([
-// //         // handlePostContentToFacebook(contentToPost),
-// //         handlePostContentToTwitter(contentToPost),
-// //       ]);
-// //       // ****more social media account will be added soon****
-// //     })
-// //     .catch((error) => {
-// //       console.log("Error occured");
-// //     });
-// // });
-
-// // // Adjust the job interval to suit your usage.
-// // // presently this is going to run at every 5 hours provided the server is always running
-// // const job = new SimpleIntervalJob({ hours: 1 }, task);
-
-// // // start up the job
-// // scheduler.addSimpleIntervalJob(job);
-
-// // // when stopping your app
-// // // scheduler.stop();
-
-// // const server = http.createServer((req, res) => {
-// //   if (req.url === "/") {
-// //     res.write("hello world");
-// //   }
-// // });
-
-// // server.listen(PORT, () => console.log(`Server listening on ${PORT}`));
