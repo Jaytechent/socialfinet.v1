@@ -2,11 +2,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import http from "http";
-import { fetchMentions, postReply } from "./services/twitterService.js";
-import { processMentionWithAI } from "./services/aireply.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
 import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { handleMentions } from "./services/mentionHandler.js";
 
 const PORT = process.env.PORT || 3000;
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
@@ -34,27 +33,6 @@ const handlePostTweet = async () => {
 
   console.log("Content posted successfully:", contentToPost);
 };
-const handleMentions = async () => {
-  const mentions = await fetchMentions();
-
-  if (!mentions || mentions.length === 0) {
-    console.log("No mentions to process.");
-    return;
-  }
-
-  for (const mention of mentions) {
-    const { text, id } = mention;
-
-    // Generate AI reply
-    const aiReply = await processMentionWithAI(text);
-
-    // Post reply using mention ID
-    await postReply(aiReply, id);
-  }
-
-  console.log("All mentions processed successfully.");
-};
-
 
 const server = http.createServer(async (req, res) => {
   if (req.url === "/post-on-ping" && req.method === "POST") {
@@ -78,7 +56,6 @@ const server = http.createServer(async (req, res) => {
     res.end("Endpoint not found.");
   }
 });
-
 
 // Start the server
 server.listen(PORT, () => {
