@@ -169,7 +169,7 @@ import chalk from "chalk";
 import cron from "node-cron";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handlePostContentToTwitter } from "./configs/twitterConfig.js";
-import { handleMentions } from "./services/mentionHandler.js";
+// import { handleMentions } from "./services/mentionHandler.js";
 import { getRandomNumber, postTopics, removeSpecialCharacters } from "./utils.js";
 
 const PORT = process.env.PORT || 3000;
